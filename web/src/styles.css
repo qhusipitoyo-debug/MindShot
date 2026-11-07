@@ -160,3 +160,36 @@ td.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-n
 .foot{margin-top:44px; padding-top:20px; border-top:1px solid var(--border); color:var(--text-faint); font-size:.78rem; line-height:1.6}
 .foot b{color:var(--text-muted)}
 @media(prefers-reduced-motion:reduce){ *{animation-duration:.001ms!important; transition-duration:.001ms!important} }
+
+/* ── Live signals panel ─────────────────────────────────────────── */
+.badge-ok{color:#25c26a;background:rgba(37,194,106,.12);border:1px solid rgba(37,194,106,.35)}
+.badge-bad{color:#e5484d;background:rgba(229,72,77,.10);border:1px solid rgba(229,72,77,.30)}
+.badge-idle{color:var(--text-muted);background:var(--surface-1);border:1px solid var(--border)}
+.sig-ticket{margin-top:14px;padding:14px 16px;border-radius:var(--r);
+  border:1px solid var(--brand-dim);background:linear-gradient(180deg,var(--brand-dim),transparent 55%),var(--surface-1)}
+.sig-ticket-hd{font-size:.82rem;font-weight:700;margin-bottom:10px}
+.sig-ticket-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 14px}
+.sig-ticket-grid i{display:block;font-style:normal;font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.02em}
+.sig-ticket-grid b{font-size:.95rem;font-weight:600}
+.sig-ticket-note{margin-top:10px;font-size:.72rem;color:var(--text-faint)}
+.mono{font-family:"JetBrains Mono",monospace;font-size:.82rem}
+
+/* ── Plan panels: PREVIEW vs LOCKED ─────────────────────────────── */
+.sig-plan{margin-top:16px;padding:12px 14px;border-radius:var(--r);
+  border:1px solid var(--border);background:var(--surface-1)}
+.sig-plan.sig-long{border-color:rgba(37,194,106,.45);background:linear-gradient(180deg,rgba(37,194,106,.10),transparent 60%),var(--surface-1)}
+.sig-plan.sig-short{border-color:rgba(229,72,77,.45);background:linear-gradient(180deg,rgba(229,72,77,.10),transparent 60%),var(--surface-1)}
+.sig-plan-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:.82rem;font-weight:600}
+.sig-checklist{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.chip.mini{font-size:.70rem;padding:2px 8px;border-radius:999px;border:1px solid var(--border)}
+.chip.mini.ok{color:#25c26a;border-color:rgba(37,194,106,.35)}
+.chip.mini.no{color:#e5484d;border-color:rgba(229,72,77,.30)}
+.sig-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:720px){.sig-two{grid-template-columns:1fr}.sig-ticket-grid{grid-template-columns:repeat(2,1fr)}}
+.sig-leg{padding:10px 12px;border:1px solid var(--border);border-radius:calc(var(--r) - 2px);background:var(--surface-2,var(--surface-1))}
+.sig-leg.sig-locked{border-color:var(--brand-dim)}
+.sig-leg-hd{display:flex;align-items:center;gap:10px;font-size:.76rem;font-weight:700;margin-bottom:8px}
+.sig-leg.invalid{opacity:.55;border-style:dashed}
+.sig-leg.invalid .sig-ticket-grid b{color:var(--text-muted)}
+.sig-leg.invalid .sig-leg-hd{color:var(--text-muted)}
+.sig-leg-note{margin-top:8px;font-size:.70rem;line-height:1.4;color:var(--text-faint)}

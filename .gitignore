@@ -6,6 +6,7 @@ __pycache__/
 .DS_Store
 
 # web dashboard
-web/node_modules/
+node_modules/
 web/dist/
 web/scripts/_smoke.bundle.mjs
+.vite/

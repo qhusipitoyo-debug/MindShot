@@ -4,6 +4,7 @@ import { Kpi, Delta } from "./components/Kpi.jsx";
 import { WinRateChart, ReturnChart, Dumbbell } from "./components/Charts.jsx";
 import { TradesPanel } from "./components/TradesPanel.jsx";
 import { StrategyTable } from "./components/StrategyTable.jsx";
+import { LiveSignals } from "./components/LiveSignals.jsx";
 import { Skeleton, ErrorState } from "./components/States.jsx";
 
 function Header({ theme, onToggle }) {
@@ -35,10 +36,52 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    fetch(import.meta.env.BASE_URL + "backtest.json", { cache: "no-cache" })
-      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((d) => setState({ status: "ok", data: d }))
-      .catch((e) => setState({ status: "error", err: String(e) }));
+    async function fetchData() {
+      setState({ status: "loading" });
+
+      const isReport = (r) =>
+        r && typeof r === "object" && r.config && r.summary;
+
+      // 1) Local backend (node server.js): live-regenerated report.
+      try {
+        const res = await fetch("/api/backtest", {
+          cache: "no-cache",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          // The server wraps the report in { success, data } — unwrap it.
+          if (isReport(json?.data)) {
+            setState({ status: "ok", data: json.data, source: "live" });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Live /api/backtest unavailable, trying static snapshot:", e.message);
+      }
+
+      // 2) Static snapshot shipped with the build (GitHub Pages has no backend).
+      try {
+        const res = await fetch(`${import.meta.env.BASE_URL}backtest.json`, {
+          cache: "no-cache",
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`HTTP ${res.status}: ${text.substring(0, 100)}`);
+        }
+        const report = await res.json();
+        if (!isReport(report)) {
+          throw new Error(
+            `Report is missing 'config'/'summary' (got keys: ${Object.keys(report || {}).join(", ")})`
+          );
+        }
+        setState({ status: "ok", data: report, source: "snapshot" });
+      } catch (e) {
+        console.error("Fetch data error:", e);
+        setState({ status: "error", err: e.message });
+      }
+    }
+    fetchData();
   }, []);
 
   const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
@@ -50,8 +93,13 @@ export default function App() {
     return <div className="wrap">{header}<ErrorState err={state.err} /></div>;
 
   const { config: cfg, summary: s, results, trades, generated_at } = state.data;
-  const winGateDelta = +(s.avg_win_rate - 60).toFixed(1);
-  const avgFinal = cfg.account_usd * (1 + s.avg_return_pct / 100);
+  
+  // Safe access with defaults
+  const avgWinRate = s.avg_win_rate ?? 0;
+  const avgReturnPct = s.avg_return_pct ?? 0;
+  
+  const winGateDelta = +(avgWinRate - 60).toFixed(1);
+  const avgFinal = cfg.account_usd * (1 + avgReturnPct / 100);
   const when = new Date(generated_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
   return (
@@ -91,6 +139,8 @@ export default function App() {
           delta={<Delta kind="neg" glyph="▼">deepest</Delta>}
           cap="peak-to-trough, single strategy" />
       </div>
+
+      <LiveSignals />
 
       <div className="sec-h"><h2>Performance</h2><span className="meta">sorted best-first</span><div className="rule" /></div>
       <div className="bento">

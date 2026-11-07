@@ -267,6 +267,23 @@ The engine has none — pure Python standard library. Only the optional dashboar
 - [x] **Backtest reporting dashboard (React + GitHub Pages, fully automated)**
 - [ ] Configurable strategy set via repo variables
 
+## 🖥️ Local dashboard & GitHub Pages
+
+This fork adds a local web dashboard around the unchanged Python signal engine.
+
+```bash
+./start.sh          # backend :3000 + dashboard :5173
+# open http://localhost:5173/
+./stop.sh           # stop both
+```
+
+- **Live signals** (status per strategy, preview BUY/SELL levels, locked tickets) require
+  the local Python backend, so they only run on `localhost`.
+- **GitHub Pages** serves a static build of the dashboard: the validated backtest report
+  plus a notice that live signals need the local backend (Pages cannot run Python or Node).
+- The Pages workflow regenerates `web/public/backtest.json` from the engine, builds
+  `web/` with `base=/MindShot/`, and deploys `web/dist`.
+
 ## 🤝 Contributing
 Contributions are welcome. For major changes, please open an issue first. Fork → branch (`git checkout -b feat/your-idea`) → commit → open a PR. CI must pass.
 
