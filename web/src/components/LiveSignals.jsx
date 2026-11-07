@@ -147,37 +147,65 @@ function AssetCard({ a }) {
   );
 }
 
+const IS_LOCAL =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+
 export function LiveSignals() {
   const [state, setState] = useState({ status: "loading" });
   const [now, setNow] = useState(Date.now());
 
   const load = useCallback(async (force = false) => {
+    // 1) Local backend (node server.js) — truly live, reads the market now.
     try {
-      const res = await fetch("/api/signals" + (force ? "?force=1" : ""));
+      const res = await fetch("/api/signals" + (force ? "?force=1" : ""), {
+        cache: "no-cache",
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data?.assets) {
+          setState({ status: "ok", data: json.data, cached: json.cached, source: "live" });
+          setNow(Date.now());
+          return;
+        }
+      }
+    } catch (e) {
+      // Pages returns index.html for /api/signals → json() throws; use snapshot.
+    }
+
+    // 2) Static snapshot refreshed by the scheduled GitHub Actions workflow.
+    try {
+      const url = `${import.meta.env.BASE_URL}signals.json` + (force ? `?t=${Date.now()}` : "");
+      const res = await fetch(url, { cache: "no-cache" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      if (!json?.data?.assets) throw new Error("bad payload");
-      setState({ status: "ok", data: json.data, cached: json.cached });
+      if (!json?.assets) throw new Error("snapshot has no assets");
+      setState({ status: "ok", data: json, cached: true, source: "snapshot" });
       setNow(Date.now());
     } catch (e) {
-      // GitHub Pages is static: there is no Python backend to read the market.
-      const local = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-      setState(local ? { status: "error", err: String(e) } : { status: "offline" });
+      setState(
+        IS_LOCAL
+          ? { status: "error", err: String(e) }
+          : { status: "offline", err: String(e) }
+      );
     }
   }, []);
 
   useEffect(() => {
     load();
-    // Poll only when a local backend can actually answer.
-    const local = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-    if (!local) return;
-    const iv = setInterval(() => load(), 60_000);
+    // Local: poll the engine every minute. Static snapshot: every 5 minutes.
+    const iv = setInterval(() => load(), IS_LOCAL ? 60_000 : 5 * 60_000);
     return () => clearInterval(iv);
   }, [load]);
 
   const lockedCount =
     state.data?.assets.flatMap((a) => a.strategies.filter((s) => s.status.startsWith("triggered"))).length ?? 0;
   const anyGateOpen = state.data?.assets.some((a) => a.strategies.some((s) => s.adx_ok));
+  const snapshotAgeMin =
+    state.source === "snapshot" && state.data?.generated_at
+      ? Math.max(0, Math.round((now - new Date(state.data.generated_at).getTime()) / 60000))
+      : null;
+  const stale = snapshotAgeMin != null && snapshotAgeMin > 90;
 
   return (
     <>
@@ -185,9 +213,12 @@ export function LiveSignals() {
         <h2>Live signals</h2>
         <span className="meta">
           {state.status === "ok"
-            ? (lockedCount ? `${lockedCount} signal terkunci 🔒` :
-               (anyGateOpen ? "gate terbuka · menunggu trigger · preview levels aktif" : "trending · gate tertutup · preview levels aktif")) + " · auto 60s"
-            : state.status === "offline" ? "mode statis · backend lokal tidak tersedia"
+            ? ((lockedCount ? `${lockedCount} signal terkunci 🔒` :
+               (anyGateOpen ? "gate terbuka · menunggu trigger · preview levels aktif" : "trending · gate tertutup · preview levels aktif")) +
+               (state.source === "snapshot"
+                 ? " · snapshot GitHub Actions · auto 5 mnt"
+                 : " · live lokal · auto 60s"))
+            : state.status === "offline" ? "snapshot belum tersedia"
             : "membaca pasar"}
           {state.status !== "offline" && (
             <button className="toggle" style={{ marginLeft: 10 }} onClick={() => load(true)} aria-label="Refresh">↻ now</button>
@@ -202,25 +233,35 @@ export function LiveSignals() {
       )}
       {state.status === "offline" && (
         <div className="insight">
-          <b>Live signals hanya berjalan di komputer Anda.</b> GitHub Pages menyajikan file statis,
-          jadi tidak ada backend Python untuk membaca pasar. Jalankan{" "}
+          <b>Snapshot sinyal belum tersedia.</b> Panel ini membaca <code>signals.json</code> yang
+          dihasilkan otomatis oleh GitHub Actions. Jika baru pertama deploy, tunggu workflow{" "}
+          <b>Deploy Dashboard</b> selesai (±1 menit). Untuk sinyal live real-time, jalankan{" "}
           <code>cd ~/Downloads/MiND-Shot &amp;&amp; ./start.sh</code> lalu buka{" "}
-          <b>http://localhost:5173/</b> untuk sinyal live + plan BUY/SELL yang terkunci.
-          <div className="src">Laporan backtest di bawah tetap valid — berasal dari snapshot build terakhir.</div>
+          <b>http://localhost:5173/</b>.
+          <div className="src">Laporan backtest di bawah tetap valid.</div>
         </div>
       )}
 
       {state.status === "ok" && (
         <>
           <div className="insight">
-            <b>Setiap strategi punya Plan BUY &amp; SELL LIVE.</b> Bila bar 4h close lolos checklist
+            <b>Setiap strategi punya Plan BUY &amp; SELL.</b> Bila bar 4h close lolos checklist
             (indikator masuk zona ekstrem <b>+ ADX(14) &lt; 25</b>), plan berubah jadi
             <b> LOCKED ✅</b> dengan Entry/Stop/Target/Size final — entry di open bar berikutnya.
             <div className="src">
-              {state.cached ? "cached ·" : "fresh ·"} {new Date(now).toLocaleTimeString()}
+              {state.source === "snapshot"
+                ? `snapshot GitHub Actions · diperbarui ${snapshotAgeMin ?? "?"} menit lalu ·`
+                : `live lokal · ${state.cached ? "cached" : "fresh"} ·`}{" "}
+              {new Date(now).toLocaleTimeString()}
               {state.data.assets.map((a) => ` · ${a.asset} ${fmt(a.last_close)}`).join("")}
             </div>
           </div>
+          {stale && (
+            <div className="insight">
+              <b>⚠️ Snapshot tertunda.</b> Terakhir diperbarui {snapshotAgeMin} menit lalu —
+              jadwal GitHub Actions mungkin sedang antre. Level tetap dihitung dari bar 4h terakhir.
+            </div>
+          )}
           <div className="bento">
             {state.data.assets.map((a) => <AssetCard key={a.asset} a={a} />)}
           </div>

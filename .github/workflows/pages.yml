@@ -1,15 +1,21 @@
 name: Deploy Dashboard
 
-# Fully automated: regenerate backtest data (Python) -> build React (Vite) -> deploy to Pages.
+# Fully automated: regenerate backtest + live-signal snapshot (Python) ->
+# build React (Vite) -> deploy to Pages. Runs on every relevant push AND on a
+# 15-minute schedule, so the static dashboard keeps near-live signals without
+# any server.
 on:
   push:
     branches: [main]
     paths:
       - 'web/**'
       - 'gen_report.py'
+      - 'live_signals.py'
       - 'mind_shot/**'
       - 'tests/fixtures/**'
       - '.github/workflows/pages.yml'
+  schedule:
+    - cron: '*/15 * * * *'   # UTC; GitHub may delay scheduled runs a few minutes
   workflow_dispatch:
 
 permissions:
@@ -35,6 +41,12 @@ jobs:
 
       - name: Regenerate backtest data from the live engine
         run: python gen_report.py        # writes web/public/backtest.json (pure stdlib)
+
+      - name: Generate live-signal snapshot with the same Python engine
+        run: |
+          python live_signals.py > /tmp/signals.json \
+            && mv /tmp/signals.json web/public/signals.json \
+            || echo "::warning::live feed unavailable — keeping the last committed signals.json"
 
       - name: Set up Node
         uses: actions/setup-node@v4
