@@ -12,6 +12,7 @@ on:
       - 'gen_report.py'
       - 'live_signals.py'
       - 'news_feed.py'
+      - 'forex_signals.py'
       - 'mind_shot/**'
       - 'tests/fixtures/**'
       - '.github/workflows/pages.yml'
@@ -55,6 +56,14 @@ jobs:
             mv /tmp/news.json web/public/news.json
           else
             echo "::warning::news feed has no upcoming high/medium events — keeping the last committed news.json"
+          fi
+
+      - name: Generate forex scan snapshot (Yahoo 1h → 4h + news gate)
+        run: |
+          if python forex_signals.py --require-data > /tmp/forex.json; then
+            mv /tmp/forex.json web/public/forex.json
+          else
+            echo "::warning::forex scan returned fewer than 2 pairs — keeping the last committed forex.json"
           fi
 
       - name: Set up Node

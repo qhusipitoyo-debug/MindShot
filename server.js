@@ -235,6 +235,58 @@ app.get("/api/news", async (req, res) => {
 });
 
 /**
+ * Forex scanner: run forex_signals.py (Yahoo 1h → 4h + news gate), cache 15 min
+ */
+let forexCache = null;
+let forexCacheAt = 0;
+const FOREX_TTL_MS = 15 * 60_000;
+
+function runForexSignals(noCache = false) {
+  return new Promise((resolve, reject) => {
+    const args = ["forex_signals.py"];
+    if (noCache) args.push("--no-cache");
+    const p = spawn("python3", args, {
+      cwd: REPO_DIR,
+      env: { ...process.env, PYTHONUNBUFFERED: "1" },
+      timeout: 240_000,
+    });
+    let stdout = "", stderr = "";
+    p.stdout.on("data", (d) => (stdout += d.toString()));
+    p.stderr.on("data", (d) => (stderr += d.toString()));
+    p.on("close", (code) => {
+      if (code !== 0 && code !== null) {
+        return reject(new Error(`forex_signals.py failed (code ${code}): ${stderr || stdout}`));
+      }
+      if (code === null) {
+        return reject(new Error(`forex_signals.py timed out: ${stderr || stdout}`));
+      }
+      try {
+        resolve(JSON.parse(stdout));
+      } catch (e) {
+        reject(new Error(`forex_signals.py JSON parse failed: ${e.message} — got: ${stdout.slice(0, 200)}`));
+      }
+    });
+    p.on("error", (err) => reject(new Error(`failed to spawn forex_signals.py: ${err.message}`)));
+  });
+}
+
+app.get("/api/forex", async (req, res) => {
+  const force = req.query.force === "1";
+  const fresh = forexCache && (Date.now() - forexCacheAt) < FOREX_TTL_MS;
+  if (fresh && !force) return res.json({ success: true, data: forexCache, cached: true });
+  try {
+    const data = await runForexSignals(force);
+    forexCache = data;
+    forexCacheAt = Date.now();
+    res.json({ success: true, data, cached: false });
+  } catch (error) {
+    console.error("Error scanning forex:", error.message);
+    if (forexCache) return res.json({ success: true, data: forexCache, cached: true, stale: true });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * Health check endpoint
  * GET /api/health
  */

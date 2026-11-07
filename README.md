@@ -295,6 +295,17 @@ This fork adds a local web dashboard around the unchanged Python signal engine.
   Caveats: the GitHub feed is HIGH-impact only, updates ~daily, declares **no license**,
   and was stale when integrated (all its rows were in the past), so TradingView is the
   primary source. Check each provider's terms before commercial use. Informational only.
+- **Forex scanner (experimental, paper only)** applies the same five mean-reversion
+  templates and the same `_levels` / `_paper_ticket` builders to 11 major pairs
+  (EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD, USDCHF, NZDUSD, EURJPY, GBPJPY, EURGBP,
+  and XAUUSD via COMEX `GC=F`). Data is Yahoo Finance hourly OHLC aggregated to
+  UTC-aligned 4h bars; because Yahoo rate-limits bursts, the scanner falls back to
+  the same URL through `r.jina.ai` and caches each symbol for 10 minutes. A pair is
+  **LOCKED** only when the indicator is in its extreme zone, ADX(14) < 25, the
+  news gate is clear (HIGH: −15/+45 min, MEDIUM: −10/+20 min), and the plan's target
+  is on the correct side of entry. Revert strategies show the mean anchor as target.
+  The rules were validated on BTC/ETH, **not** on forex — treat the output as
+  screening/decision support, not financial advice.
 
 ## 🤝 Contributing
 Contributions are welcome. For major changes, please open an issue first. Fork → branch (`git checkout -b feat/your-idea`) → commit → open a PR. CI must pass.
