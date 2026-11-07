@@ -185,6 +185,56 @@ app.get("/api/signals", async (req, res) => {
 });
 
 /**
+ * Economic news feed: run news_feed.py (TradingView + GitHub feed), cache 15 min
+ */
+let newsCache = null;
+let newsCacheAt = 0;
+const NEWS_TTL_MS = 15 * 60_000;
+
+function runNewsFeed() {
+  return new Promise((resolve, reject) => {
+    const p = spawn("python3", ["news_feed.py"], {
+      cwd: REPO_DIR,
+      env: { ...process.env, PYTHONUNBUFFERED: "1" },
+      timeout: 120_000,
+    });
+    let stdout = "", stderr = "";
+    p.stdout.on("data", (d) => (stdout += d.toString()));
+    p.stderr.on("data", (d) => (stderr += d.toString()));
+    p.on("close", (code) => {
+      if (code !== 0 && code !== null) {
+        return reject(new Error(`news_feed.py failed (code ${code}): ${stderr || stdout}`));
+      }
+      if (code === null) {
+        return reject(new Error(`news_feed.py timed out: ${stderr || stdout}`));
+      }
+      try {
+        resolve(JSON.parse(stdout));
+      } catch (e) {
+        reject(new Error(`news_feed.py JSON parse failed: ${e.message}`));
+      }
+    });
+    p.on("error", (err) => reject(new Error(`failed to spawn news_feed.py: ${err.message}`)));
+  });
+}
+
+app.get("/api/news", async (req, res) => {
+  const force = req.query.force === "1";
+  const fresh = newsCache && (Date.now() - newsCacheAt) < NEWS_TTL_MS;
+  if (fresh && !force) return res.json({ success: true, data: newsCache, cached: true });
+  try {
+    const data = await runNewsFeed();
+    newsCache = data;
+    newsCacheAt = Date.now();
+    res.json({ success: true, data, cached: false });
+  } catch (error) {
+    console.error("Error fetching news feed:", error.message);
+    if (fresh) return res.json({ success: true, data: newsCache, cached: true, stale: true });
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
  * Health check endpoint
  * GET /api/health
  */

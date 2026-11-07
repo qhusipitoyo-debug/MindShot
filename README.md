@@ -287,6 +287,14 @@ This fork adds a local web dashboard around the unchanged Python signal engine.
   `base=/MindShot/`, and deploys `web/dist`. It is free for public repositories.
   GitHub may delay scheduled runs, and scheduled workflows pause after 60 days of
   repository inactivity (any push re-enables them).
+- **News & impact (forex)** aggregates the next ~7–10 days of economic events from
+  TradingView's public calendar and the GitHub feed
+  [`Brainstrom1974/news-calendar-feed`](https://github.com/Brainstrom1974/news-calendar-feed).
+  The panel maps events to pairs, shows HIGH/MEDIUM badges, countdowns and
+  blackout windows (±30 min HIGH / ±15 min MEDIUM), and displays source freshness.
+  Caveats: the GitHub feed is HIGH-impact only, updates ~daily, declares **no license**,
+  and was stale when integrated (all its rows were in the past), so TradingView is the
+  primary source. Check each provider's terms before commercial use. Informational only.
 
 ## 🤝 Contributing
 Contributions are welcome. For major changes, please open an issue first. Fork → branch (`git checkout -b feat/your-idea`) → commit → open a PR. CI must pass.

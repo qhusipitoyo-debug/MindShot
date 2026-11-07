@@ -11,6 +11,7 @@ on:
       - 'web/**'
       - 'gen_report.py'
       - 'live_signals.py'
+      - 'news_feed.py'
       - 'mind_shot/**'
       - 'tests/fixtures/**'
       - '.github/workflows/pages.yml'
@@ -47,6 +48,14 @@ jobs:
           python live_signals.py > /tmp/signals.json \
             && mv /tmp/signals.json web/public/signals.json \
             || echo "::warning::live feed unavailable — keeping the last committed signals.json"
+
+      - name: Generate economic-news snapshot (TradingView + GitHub feed)
+        run: |
+          if python news_feed.py --require-events > /tmp/news.json; then
+            mv /tmp/news.json web/public/news.json
+          else
+            echo "::warning::news feed has no upcoming high/medium events — keeping the last committed news.json"
+          fi
 
       - name: Set up Node
         uses: actions/setup-node@v4

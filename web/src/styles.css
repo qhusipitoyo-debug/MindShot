@@ -193,3 +193,31 @@ td.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-n
 .sig-leg.invalid .sig-ticket-grid b{color:var(--text-muted)}
 .sig-leg.invalid .sig-leg-hd{color:var(--text-muted)}
 .sig-leg-note{margin-top:8px;font-size:.70rem;line-height:1.4;color:var(--text-faint)}
+
+/* ── News & impact panel ────────────────────────────────────────── */
+.news-pairs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0}
+.chip.pair{cursor:pointer;border:1px solid var(--border);background:var(--surface-1);
+  color:var(--text-muted);font-size:.72rem;padding:4px 10px;border-radius:999px}
+.chip.pair:hover{border-color:var(--brand-dim);color:var(--text)}
+.chip.pair.active{color:var(--brand-bright);border-color:var(--brand-dim);
+  background:var(--brand-dim);font-weight:600}
+.news-status{margin:10px 0 12px;padding:10px 14px;border-radius:var(--r);
+  border:1px solid var(--border);font-size:.84rem;line-height:1.4}
+.news-status.is-block{border-color:rgba(229,72,77,.45);background:rgba(229,72,77,.10)}
+.news-status.is-soon{border-color:rgba(217,119,6,.45);background:rgba(217,119,6,.10)}
+.news-status.is-clear{border-color:rgba(37,194,106,.35);background:rgba(37,194,106,.08)}
+.news-time{white-space:nowrap;font-variant-numeric:tabular-nums}
+.news-time span{display:block;font-size:.68rem;color:var(--text-faint)}
+.news-title{min-width:220px}
+.news-title .news-vals{display:block;font-size:.68rem;color:var(--text-faint)}
+.badge.imp-high{color:#e5484d;background:rgba(229,72,77,.12);border:1px solid rgba(229,72,77,.35)}
+.badge.imp-med{color:#d97706;background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.35)}
+.badge.imp-low{color:var(--text-muted);background:var(--surface-1);border:1px solid var(--border)}
+.badge.imp-hol{color:#6aa9ff;background:rgba(106,169,255,.12);border:1px solid rgba(106,169,255,.35)}
+.ccy{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:.78rem}
+.news-src{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;
+  font-size:.70rem;color:var(--text-faint)}
+.news-src a{text-decoration:none}
+.news-note{color:var(--text-faint);font-size:.70rem;line-height:1.5}
+.news-empty{padding:14px 16px;border:1px dashed var(--border);border-radius:var(--r);
+  color:var(--text-muted);font-size:.84rem}

@@ -5,6 +5,7 @@ import { WinRateChart, ReturnChart, Dumbbell } from "./components/Charts.jsx";
 import { TradesPanel } from "./components/TradesPanel.jsx";
 import { StrategyTable } from "./components/StrategyTable.jsx";
 import { LiveSignals } from "./components/LiveSignals.jsx";
+import { NewsCalendar } from "./components/NewsCalendar.jsx";
 import { Skeleton, ErrorState } from "./components/States.jsx";
 
 function Header({ theme, onToggle }) {
@@ -141,6 +142,8 @@ export default function App() {
       </div>
 
       <LiveSignals />
+
+      <NewsCalendar />
 
       <div className="sec-h"><h2>Performance</h2><span className="meta">sorted best-first</span><div className="rule" /></div>
       <div className="bento">
