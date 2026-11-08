@@ -91,10 +91,16 @@ export async function fetchCandles(symbol: string, interval = '4h', limit = 60) 
     // fallback
   }
 
-  // If Binance symbol, query direct from browser
-  if (symbol.endsWith('USDT') || symbol.endsWith('BTC')) {
+  // If Binance symbol or Gold (PAXG 24/7), query direct from browser
+  const binanceSymbol = symbol.endsWith('USDT') || symbol.endsWith('BTC')
+    ? symbol
+    : symbol === 'GC=F'
+    ? 'PAXGUSDT'
+    : null;
+
+  if (binanceSymbol) {
     try {
-      const bRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+      const bRes = await fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`);
       if (bRes.ok) {
         const klines = await bRes.json();
         return klines.map((k: any) => ({
@@ -111,15 +117,30 @@ export async function fetchCandles(symbol: string, interval = '4h', limit = 60) 
     }
   }
 
-  // Deterministic local candles fallback
+  // Deterministic local candles fallback scaled to real asset price
+  const symbolScale: Record<string, number> = {
+    'EURUSD=X': 1.1143,
+    'GBPUSD=X': 1.3356,
+    'JPY=X': 158.42,
+    'AUDUSD=X': 0.6725,
+    'CAD=X': 1.3780,
+    'GC=F': 4075.0,
+    'CL=F': 90.80,
+    'SI=F': 34.20,
+    '^GSPC': 7375.0,
+    '^IXIC': 24580.0,
+    'NVDA': 142.5,
+    'AAPL': 232.0,
+  };
+
   const now = Math.floor(Date.now() / 1000);
-  const step = interval === '4h' ? 14400 : 3600;
-  const base = symbol.includes('BTC') ? 75900 : symbol.includes('ETH') ? 2240 : 100;
+  const step = interval === '4h' ? 14400 : interval === '1h' ? 3600 : 900;
+  const base = symbolScale[symbol] || (symbol.includes('BTC') ? 75900 : symbol.includes('ETH') ? 2240 : 100);
   const candles = [];
   let curr = base;
   for (let i = limit; i >= 0; i--) {
     const t = now - i * step;
-    const change = (Math.sin(i / 3) + Math.cos(i / 5)) * 0.004 * curr;
+    const change = (Math.sin(i / 3) + Math.cos(i / 5)) * 0.003 * curr;
     const open = curr;
     const close = curr + change;
     candles.push({
@@ -128,7 +149,7 @@ export async function fetchCandles(symbol: string, interval = '4h', limit = 60) 
       high: Math.max(open, close) * 1.002,
       low: Math.min(open, close) * 0.998,
       close,
-      volume: 1000,
+      volume: 1200,
     });
     curr = close;
   }

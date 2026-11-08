@@ -375,6 +375,35 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
               })}
             </div>
 
+            {/* Market Session Status Banner */}
+            <div
+              className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium mb-3 border ${
+                selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC')
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC')
+                      ? 'bg-emerald-400 animate-pulse'
+                      : 'bg-amber-400'
+                  }`}
+                />
+                <span>
+                  {selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC')
+                    ? 'Status Pasar: 24/7/365 Non-stop Active (Binance WSS Sub-second Streaming)'
+                    : selectedSymbol === 'GC=F'
+                    ? 'Status Pasar: Gold 24/7 Active (Binance Paxos Gold WSS & CME Close)'
+                    : 'Status Pasar: Weekend Pause (Pasar Konvensional Tutup Akhir Pekan · Buka Kembali Senin 05:00 WIB)'}
+                </span>
+              </div>
+              <span className="text-[11px] mono text-[var(--text-faint)] hidden sm:inline">
+                {selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC') ? 'Live Ticking' : 'Friday Close Price'}
+              </span>
+            </div>
+
             {/* Chart SVG */}
             <div className="w-full bg-[var(--surface-2)] rounded-lg p-2 border border-[var(--border)] relative">
               {isLoadingChart && (

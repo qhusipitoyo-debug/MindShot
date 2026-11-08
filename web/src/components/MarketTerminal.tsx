@@ -211,6 +211,35 @@ export const MarketTerminal: React.FC<MarketTerminalProps> = ({ markets }) => {
         </div>
       </div>
 
+      {/* Market Session Status Banner */}
+      <div
+        className={`flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium mb-4 border ${
+          selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC')
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className={`w-2.5 h-2.5 rounded-full ${
+              selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC')
+                ? 'bg-emerald-400 animate-pulse'
+                : 'bg-amber-400'
+            }`}
+          />
+          <span>
+            {selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC')
+              ? 'Status Pasar: 24/7/365 Non-stop Active (Binance WSS Sub-second Streaming)'
+              : selectedSymbol === 'GC=F'
+              ? 'Status Pasar: Gold 24/7 Active (Binance Paxos Gold WSS & CME Close)'
+              : 'Status Pasar: Weekend Pause (Pasar Konvensional Tutup Akhir Pekan · Buka Kembali Senin 05:00 WIB)'}
+          </span>
+        </div>
+        <span className="text-[11px] mono text-[var(--text-faint)] hidden sm:inline">
+          {selectedSymbol.endsWith('USDT') || selectedSymbol.endsWith('BTC') ? 'Live Ticking' : 'Friday Close Price'}
+        </span>
+      </div>
+
       {/* Main Grid: Chart + Orderbook/Tick Stream */}
       <div className="bento">
         {/* Main Chart */}
