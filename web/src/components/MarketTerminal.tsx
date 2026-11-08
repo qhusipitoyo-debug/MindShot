@@ -54,8 +54,21 @@ export const MarketTerminal: React.FC<MarketTerminalProps> = ({ markets }) => {
     };
   }, [selectedSymbol, interval]);
 
-  // Calculate indicators for charting
-  const closes = useMemo(() => candles.map((c) => c.close), [candles]);
+  // Dynamically attach the live tick price to the current forming candle
+  const displayCandles = useMemo(() => {
+    if (!candles.length || !currentItem?.price) return candles;
+    const copy = [...candles];
+    const last = { ...copy[copy.length - 1] };
+    const p = currentItem.price;
+    last.close = p;
+    last.high = Math.max(last.high, p);
+    last.low = Math.min(last.low, p);
+    copy[copy.length - 1] = last;
+    return copy;
+  }, [candles, currentItem?.price]);
+
+  // Calculate indicators for charting using displayCandles
+  const closes = useMemo(() => displayCandles.map((c) => c.close), [displayCandles]);
   const bb = useMemo(() => calculateBollingerBands(closes, 20, 2.0), [closes]);
   const ema20 = useMemo(() => calculateEMA(closes, 20), [closes]);
   const rsi = useMemo(() => calculateRSI(closes, 14), [closes]);
@@ -66,20 +79,20 @@ export const MarketTerminal: React.FC<MarketTerminalProps> = ({ markets }) => {
   const padding = { top: 20, right: 60, bottom: 30, left: 20 };
 
   const minPrice = useMemo(() => {
-    if (!candles.length) return 0;
-    const lows = candles.map((c) => c.low);
+    if (!displayCandles.length) return 0;
+    const lows = displayCandles.map((c) => c.low);
     const bbLows = bb.lower.filter((v) => !isNaN(v));
     const all = [...lows, ...bbLows];
     return Math.min(...all) * 0.998;
-  }, [candles, bb]);
+  }, [displayCandles, bb]);
 
   const maxPrice = useMemo(() => {
-    if (!candles.length) return 100;
-    const highs = candles.map((c) => c.high);
+    if (!displayCandles.length) return 100;
+    const highs = displayCandles.map((c) => c.high);
     const bbHighs = bb.upper.filter((v) => !isNaN(v));
     const all = [...highs, ...bbHighs];
     return Math.max(...all) * 1.002;
-  }, [candles, bb]);
+  }, [displayCandles, bb]);
 
   const priceRange = maxPrice - minPrice || 1;
 
@@ -89,7 +102,7 @@ export const MarketTerminal: React.FC<MarketTerminalProps> = ({ markets }) => {
 
   const getX = (index: number) => {
     const usableWidth = chartWidth - padding.left - padding.right;
-    const step = usableWidth / Math.max(1, candles.length - 1);
+    const step = usableWidth / Math.max(1, displayCandles.length - 1);
     return padding.left + index * step;
   };
 
@@ -99,28 +112,28 @@ export const MarketTerminal: React.FC<MarketTerminalProps> = ({ markets }) => {
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [bb.upper, candles]);
+  }, [bb.upper, displayCandles]);
 
   const lowerBBPath = useMemo(() => {
     return bb.lower
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [bb.lower, candles]);
+  }, [bb.lower, displayCandles]);
 
   const middleBBPath = useMemo(() => {
     return bb.middle
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [bb.middle, candles]);
+  }, [bb.middle, displayCandles]);
 
   const emaPath = useMemo(() => {
     return ema20
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [ema20, candles]);
+  }, [ema20, displayCandles]);
 
   // Current RSI latest
   const latestRsi = rsi.filter((v) => !isNaN(v)).pop() || 50;
@@ -305,10 +318,10 @@ export const MarketTerminal: React.FC<MarketTerminalProps> = ({ markets }) => {
               <path d={emaPath} fill="none" stroke="#38bdf8" strokeWidth="1.2" />
 
               {/* Candlesticks */}
-              {candles.map((candle, idx) => {
+              {displayCandles.map((candle, idx) => {
                 const isGreen = candle.close >= candle.open;
                 const x = getX(idx);
-                const candleWidth = Math.max(3, (chartWidth - padding.left - padding.right) / candles.length - 4);
+                const candleWidth = Math.max(3, (chartWidth - padding.left - padding.right) / displayCandles.length - 4);
                 const highY = getY(candle.high);
                 const lowY = getY(candle.low);
                 const openY = getY(candle.open);

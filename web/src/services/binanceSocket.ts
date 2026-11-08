@@ -20,7 +20,7 @@ class BinanceSocketService {
   private isExplicitClose = false;
   private currentStatus: 'connected' | 'connecting' | 'disconnected' | 'error' = 'disconnected';
 
-  private symbols = ['btcusdt', 'ethusdt', 'solusdt', 'bnbusdt', 'xrpusdt'];
+  private symbols = ['btcusdt', 'ethusdt', 'solusdt', 'bnbusdt', 'xrpusdt', 'eurusdt', 'paxgusdt'];
 
   constructor() {
     // defer connection to browser environment

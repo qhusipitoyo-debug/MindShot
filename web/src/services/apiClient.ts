@@ -11,7 +11,7 @@ import {
   MarketCategory,
 } from '../types/market';
 
-const BASE = import.meta.env.BASE_URL || './';
+const BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || './';
 
 export async function fetchMarketQuotes(): Promise<{
   crypto: MarketItem[];
@@ -91,11 +91,13 @@ export async function fetchCandles(symbol: string, interval = '4h', limit = 60) 
     // fallback
   }
 
-  // If Binance symbol or Gold (PAXG 24/7), query direct from browser
+  // If Binance symbol, Gold (PAXG 24/7), or Euro (EURUSDT 24/7), query direct from browser
   const binanceSymbol = symbol.endsWith('USDT') || symbol.endsWith('BTC')
     ? symbol
     : symbol === 'GC=F'
     ? 'PAXGUSDT'
+    : symbol === 'EURUSD=X'
+    ? 'EURUSDT'
     : null;
 
   if (binanceSymbol) {

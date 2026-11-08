@@ -101,8 +101,21 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
 
   const activeItem = allSymbols.find((s) => s.id === selectedSymbol) || allSymbols[0];
 
-  // Calculate chart indicators
-  const closes = useMemo(() => candles.map((c) => c.close), [candles]);
+  // Dynamically attach the live tick price to the current forming candle
+  const displayCandles = useMemo(() => {
+    if (!candles.length || !activeItem?.price) return candles;
+    const copy = [...candles];
+    const last = { ...copy[copy.length - 1] };
+    const p = activeItem.price;
+    last.close = p;
+    last.high = Math.max(last.high, p);
+    last.low = Math.min(last.low, p);
+    copy[copy.length - 1] = last;
+    return copy;
+  }, [candles, activeItem?.price]);
+
+  // Calculate chart indicators using displayCandles
+  const closes = useMemo(() => displayCandles.map((c) => c.close), [displayCandles]);
   const bb = useMemo(() => calculateBollingerBands(closes, 20, 2.0), [closes]);
   const ema20 = useMemo(() => calculateEMA(closes, 20), [closes]);
   const rsi = useMemo(() => calculateRSI(closes, 14), [closes]);
@@ -139,18 +152,18 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   const pad = { top: 20, right: 60, bottom: 25, left: 15 };
 
   const minPrice = useMemo(() => {
-    if (!candles.length) return 0;
-    const lows = candles.map((c) => c.low);
+    if (!displayCandles.length) return 0;
+    const lows = displayCandles.map((c) => c.low);
     const bbLows = bb.lower.filter((v) => !isNaN(v));
     return Math.min(...lows, ...bbLows) * 0.998;
-  }, [candles, bb]);
+  }, [displayCandles, bb]);
 
   const maxPrice = useMemo(() => {
-    if (!candles.length) return 100;
-    const highs = candles.map((c) => c.high);
+    if (!displayCandles.length) return 100;
+    const highs = displayCandles.map((c) => c.high);
     const bbHighs = bb.upper.filter((v) => !isNaN(v));
     return Math.max(...highs, ...bbHighs) * 1.002;
-  }, [candles, bb]);
+  }, [displayCandles, bb]);
 
   const priceRange = maxPrice - minPrice || 1;
 
@@ -159,7 +172,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   };
 
   const getX = (idx: number) => {
-    const step = (chartW - pad.left - pad.right) / Math.max(1, candles.length - 1);
+    const step = (chartW - pad.left - pad.right) / Math.max(1, displayCandles.length - 1);
     return pad.left + idx * step;
   };
 
@@ -168,28 +181,28 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [bb.upper, candles]);
+  }, [bb.upper, displayCandles]);
 
   const lowerBBPath = useMemo(() => {
     return bb.lower
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [bb.lower, candles]);
+  }, [bb.lower, displayCandles]);
 
   const middleBBPath = useMemo(() => {
     return bb.middle
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [bb.middle, candles]);
+  }, [bb.middle, displayCandles]);
 
   const emaPath = useMemo(() => {
     return ema20
       .map((val, i) => (isNaN(val) ? '' : `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(val)}`))
       .filter(Boolean)
       .join(' ');
-  }, [ema20, candles]);
+  }, [ema20, displayCandles]);
 
   const handleCopyTicket = (strat: StrategySignal, asset: AssetSignals) => {
     if (!strat.ticket) return;
@@ -444,10 +457,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 <path d={emaPath} fill="none" stroke="#38bdf8" strokeWidth="1.2" />
 
                 {/* Candlesticks */}
-                {candles.map((candle, idx) => {
+                {displayCandles.map((candle, idx) => {
                   const isGreen = candle.close >= candle.open;
                   const x = getX(idx);
-                  const candleWidth = Math.max(3, (chartW - pad.left - pad.right) / candles.length - 4);
+                  const candleWidth = Math.max(3, (chartW - pad.left - pad.right) / displayCandles.length - 4);
                   const highY = getY(candle.high);
                   const lowY = getY(candle.low);
                   const openY = getY(candle.open);

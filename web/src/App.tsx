@@ -110,6 +110,9 @@ export default function App() {
     const unsubTick = binanceSocket.subscribe((tick) => {
       // Update crypto item in real time with flash
       setMarkets((prev) => {
+        const isEur = tick.symbol.toLowerCase() === 'eurusdt';
+        const isPaxg = tick.symbol.toLowerCase() === 'paxgusdt';
+
         const cryptos = prev.crypto.map((c) => {
           if (c.id.toLowerCase() === tick.symbol.toLowerCase()) {
             const oldPrice = c.price;
@@ -127,7 +130,42 @@ export default function App() {
           }
           return c;
         });
-        return { ...prev, crypto: cryptos };
+
+        const forex = prev.forex.map((f) => {
+          if (isEur && f.id === 'EURUSD=X') {
+            const oldPrice = f.price;
+            const flash = tick.price > oldPrice ? ('up' as const) : tick.price < oldPrice ? ('down' as const) : null;
+            return {
+              ...f,
+              price: tick.price,
+              change24h: tick.change24h,
+              high24h: tick.high24h,
+              low24h: tick.low24h,
+              timestamp: tick.timestamp,
+              flash,
+            };
+          }
+          return f;
+        });
+
+        const commodities = prev.commodities.map((m) => {
+          if (isPaxg && m.id === 'GC=F') {
+            const oldPrice = m.price;
+            const flash = tick.price > oldPrice ? ('up' as const) : tick.price < oldPrice ? ('down' as const) : null;
+            return {
+              ...m,
+              price: tick.price,
+              change24h: tick.change24h,
+              high24h: tick.high24h,
+              low24h: tick.low24h,
+              timestamp: tick.timestamp,
+              flash,
+            };
+          }
+          return m;
+        });
+
+        return { ...prev, crypto: cryptos, forex, commodities };
       });
     });
 
