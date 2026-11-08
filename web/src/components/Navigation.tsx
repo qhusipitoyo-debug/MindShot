@@ -1,7 +1,7 @@
 import React from 'react';
-import { Target, LineChart, Sliders, Newspaper, Award } from 'lucide-react';
+import { LayoutDashboard, Target, LineChart, Sliders, Newspaper, Award } from 'lucide-react';
 
-export type ActiveTab = 'signals' | 'terminal' | 'calibration' | 'news' | 'backtest';
+export type ActiveTab = 'cockpit' | 'signals' | 'terminal' | 'calibration' | 'news' | 'backtest';
 
 interface NavigationProps {
   activeTab: ActiveTab;
@@ -16,29 +16,34 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const tabs = [
     {
-      id: 'signals' as ActiveTab,
-      label: 'Sinyal Live & Eksekusi',
-      icon: Target,
+      id: 'cockpit' as ActiveTab,
+      label: 'Cockpit Terpadu',
+      icon: LayoutDashboard,
       badge: lockedSignalsCount > 0 ? `${lockedSignalsCount} LOCKED` : undefined,
     },
     {
+      id: 'signals' as ActiveTab,
+      label: 'Sinyal & Eksekusi',
+      icon: Target,
+    },
+    {
       id: 'terminal' as ActiveTab,
-      label: 'Terminal Live & Chart',
+      label: 'Terminal Chart',
       icon: LineChart,
     },
     {
       id: 'calibration' as ActiveTab,
-      label: 'Kalibrasi Multi-Market',
+      label: 'Studio Kalibrasi',
       icon: Sliders,
     },
     {
       id: 'news' as ActiveTab,
-      label: 'News & Blackout Gate',
+      label: 'News Blackout Gate',
       icon: Newspaper,
     },
     {
       id: 'backtest' as ActiveTab,
-      label: 'Validasi Playbook (Backtest)',
+      label: 'Validasi Playbook',
       icon: Award,
     },
   ];
@@ -59,7 +64,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             <Icon className="w-4 h-4" />
             <span>{tab.label}</span>
             {tab.badge && (
-              <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1">
+              <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 animate-pulse">
                 {tab.badge}
               </span>
             )}

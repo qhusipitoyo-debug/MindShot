@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import { Header } from './components/Header';
 import { Navigation, ActiveTab } from './components/Navigation';
+import { CommandCenter } from './components/CommandCenter';
 import { LiveSignalsPanel } from './components/LiveSignalsPanel';
 import { MarketTerminal } from './components/MarketTerminal';
 import { CalibrationStudio } from './components/CalibrationStudio';
@@ -26,8 +27,8 @@ export default function App() {
     return 'dark';
   });
 
-  // Active navigation tab
-  const [activeTab, setActiveTab] = useState<ActiveTab>('signals');
+  // Active navigation tab defaults to unified dynamic Cockpit view
+  const [activeTab, setActiveTab] = useState<ActiveTab>('cockpit');
   const [, startTransition] = useTransition();
 
   // Connection and live data states
@@ -231,6 +232,17 @@ export default function App() {
 
       {/* Main Tab Content */}
       <main>
+        {activeTab === 'cockpit' && (
+          <CommandCenter
+            markets={markets}
+            signals={signalsData.assets}
+            currencyStatus={newsData.currencyStatus}
+            onSelectTab={setActiveTab}
+            onRefresh={() => loadAllData(true)}
+            isRefreshing={isRefreshing}
+          />
+        )}
+
         {activeTab === 'signals' && (
           <LiveSignalsPanel
             assets={signalsData.assets}
