@@ -299,7 +299,7 @@ This fork adds a local web dashboard around the unchanged Python signal engine.
   templates and the same `_levels` / `_paper_ticket` builders to the forex majors
   (EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD, USDCHF, NZDUSD, EURJPY, GBPJPY, EURGBP),
   the gold proxy `XAUUSD` via COMEX `GC=F`, and the US indices **Nasdaq-100 (NDX100)**,
-  **S&P 500 (SPX500)** and **US-100 (US100)**. Data is Yahoo Finance hourly OHLC
+  **S&P 500 (SPX500)**, **US-100 (US100)**, **Russell 2000 (RUT2000)** and **Dow Jones (DJIA)**. Data is Yahoo Finance hourly OHLC
   aggregated to UTC-aligned 4h bars; because Yahoo rate-limits bursts, the scanner
   falls back to the same URL through `r.jina.ai` and caches each symbol for 10 minutes.
   A pair is **LOCKED** only when the indicator is in its extreme zone, ADX(14) < 25, the

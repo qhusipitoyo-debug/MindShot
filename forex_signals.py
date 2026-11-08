@@ -75,6 +75,11 @@ PAIRS: List[dict] = [
      "currencies": ["USD"]},
     {"pair": "US100", "symbol": "^NDX", "label": "US100", "kind": "index",
      "currencies": ["USD"]},
+    # Broad US small-cap + blue-chip indices (same playbook, 4h bars).
+    {"pair": "RUT2000", "symbol": "^RUT", "label": "RUT2000", "kind": "index",
+     "currencies": ["USD"]},
+    {"pair": "DJIA", "symbol": "^DJI", "label": "DJIA", "kind": "index",
+     "currencies": ["USD"]},
 ]
 
 # Same five playbook rules the crypto panel evaluates (ETH's four + BTC z-score).
