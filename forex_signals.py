@@ -66,7 +66,15 @@ PAIRS: List[dict] = [
     {"pair": "GBPJPY", "symbol": "GBPJPY=X", "currencies": ["GBP", "JPY"]},
     {"pair": "EURGBP", "symbol": "EURGBP=X", "currencies": ["EUR", "GBP"]},
     # Yahoo has no spot XAUUSD ticker; COMEX gold futures are the usual proxy.
-    {"pair": "XAUUSD", "symbol": "GC=F", "currencies": ["USD"], "proxy": True},
+    {"pair": "XAUUSD", "symbol": "GC=F", "label": "XAU/USD", "kind": "commodity",
+     "currencies": ["USD"], "proxy": True},
+    # Equity indices share the same mean-reversion playbook (same 4h timeframe).
+    {"pair": "NDX100", "symbol": "QQQ", "label": "NDX100", "kind": "index",
+     "currencies": ["USD"]},
+    {"pair": "SPX500", "symbol": "^GSPC", "label": "SPX500", "kind": "index",
+     "currencies": ["USD"]},
+    {"pair": "US100", "symbol": "^NDX", "label": "US100", "kind": "index",
+     "currencies": ["USD"]},
 ]
 
 # Same five playbook rules the crypto panel evaluates (ETH's four + BTC z-score).
@@ -409,9 +417,10 @@ def scan_pair(meta: dict, candles: List[Candle], events: Sequence[dict],
 
     return {
         "pair": meta["pair"],
-        "label": f"{meta['pair'][:3]}/{meta['pair'][3:]}",
+        "label": meta.get("label") or f"{meta['pair'][:3]}/{meta['pair'][3:]}",
         "symbol": meta["symbol"],
         "proxy": bool(meta.get("proxy")),
+        "kind": meta.get("kind") or "forex",
         "currencies": meta["currencies"],
         "source": source,
         "last_close": round(close, 6),

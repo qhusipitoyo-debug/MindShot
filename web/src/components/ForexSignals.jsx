@@ -374,7 +374,8 @@ export function ForexSignals() {
                 {pairs.map((p) => (
                   <tr key={p.pair}>
                     <td className="st-name">
-                      {p.label} {p.proxy && <span className="chip mini">proxy</span>}
+                      {p.label} {p.proxy && <span className="chip mini">proxy</span>}{" "}
+                      <span className="chip mini">{p.kind}</span>
                     </td>
                     <td className="num mono">{fmtPrice(p.last_close)}</td>
                     <td><Badge map={PAIR_STATUS} value={p.status} /></td>
