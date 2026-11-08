@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const IS_LOCAL =
   typeof window !== "undefined" &&
@@ -196,6 +196,12 @@ function PairDetail({ p }) {
 export function ForexSignals() {
   const [state, setState] = useState({ status: "loading" });
   const [now, setNow] = useState(Date.now());
+  const [notifs, setNotifs] = useState([]);
+  const lastLocksRef = useRef(null);
+  const lastBlackoutsRef = useRef(null);
+  const notifInitRef = useRef(false);
+  const notifBlackInitRef = useRef(false);
+  const notifIdRef = useRef(0);
 
   const load = useCallback(async (force = false) => {
     try {
@@ -238,6 +244,57 @@ export function ForexSignals() {
     return () => clearInterval(iv);
   }, []);
 
+  const addNotif = (n) => {
+    const id = ++notifIdRef.current;
+    setNotifs((prev) => [{ id, t: Date.now(), ...n }, ...prev].slice(0, 6));
+  };
+
+  useEffect(() => {
+    if (state.status !== "ok" || !state.data) return;
+    const data = state.data;
+
+    const locks = new Set();
+    for (const p of data.pairs) {
+      if (p.locked) for (const s of p.locked) locks.add(`${p.pair}:${s.id}`);
+    }
+    if (!notifInitRef.current) {
+      notifInitRef.current = true;
+      lastLocksRef.current = locks;
+      return;
+    }
+    const prevLocks = lastLocksRef.current;
+    for (const k of locks) {
+      if (prevLocks && prevLocks.has(k)) continue;
+      const [pair, sid] = k.split(":");
+      const p = data.pairs.find((x) => x.pair === pair);
+      const s = p?.strategies?.find((x) => x.id === sid);
+      if (s?.ticket) {
+        addNotif({
+          kind: "lock",
+          text: `🔒 ${p.label} — ${s.ticket.side === "LONG" ? "BUY" : "SELL"} LOCKED · ${s.name} · entry ${s.ticket.entry} · TP ${s.ticket.tp}`,
+        });
+      }
+    }
+    lastLocksRef.current = locks;
+
+    const blackouts = {};
+    for (const p of data.pairs) {
+      blackouts[p.pair] = p.news?.blocked ? `${p.news.active.ccy} ${p.news.active.title}` : null;
+    }
+    if (!notifBlackInitRef.current) {
+      notifBlackInitRef.current = true;
+      lastBlackoutsRef.current = blackouts;
+      return;
+    }
+    const prevB = lastBlackoutsRef.current || {};
+    for (const [pair, ev] of Object.entries(blackouts)) {
+      const was = prevB[pair];
+      if (ev && was !== ev) addNotif({ kind: "blackout", text: `⛔ News blackout — ${pair} · ${ev}` });
+      if (!ev && was) addNotif({ kind: "clear", text: `✓ News clear — ${pair}` });
+    }
+    lastBlackoutsRef.current = blackouts;
+  }, [state]);
+
   const data = state.data;
   const pairs = data?.pairs ?? [];
   const lockedPairs = useMemo(() => pairs.filter((p) => p.locked.length > 0), [pairs]);
@@ -256,6 +313,7 @@ export function ForexSignals() {
       : null;
   const stale = snapshotAgeMin != null && snapshotAgeMin > 75;
   const blockedCount = pairs.filter((p) => p.status === "news-blocked").length;
+  const visibleNotifs = notifs.filter((n) => now - n.t < 30_000);
 
   return (
     <>
@@ -330,6 +388,23 @@ export function ForexSignals() {
               </>
             )}
           </div>
+
+          {visibleNotifs.length > 0 && (
+            <div className="fx-notifs">
+              {visibleNotifs.map((n) => (
+                <div key={n.id} className={"fx-notif " + n.kind}>
+                  <span>{n.text}</span>
+                  <button
+                    className="fx-notif-x"
+                    onClick={() => setNotifs((p) => p.filter((x) => x.id !== n.id))}
+                    aria-label="Dismiss"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="sec-h" style={{ marginTop: 22 }}>
             <h2>Plan terkunci siap order</h2>

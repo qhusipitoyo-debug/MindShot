@@ -274,3 +274,16 @@ td.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-n
   .fx-preview-body{grid-template-columns:1fr}
   .fx-lock-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ── Forex scanner: dashboard notifications ──────────────────────── */
+.fx-notifs{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
+.fx-notif{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 12px;border-radius:var(--r-sm);border:1px solid var(--border);
+  background:var(--surface-1);font-size:.78rem}
+.fx-notif.fx-lock{border-color:rgba(37,194,106,.45);background:rgba(37,194,106,.08)}
+.fx-notif.fx-blackout{border-color:rgba(229,72,77,.45);background:rgba(229,72,77,.08)}
+.fx-notif.fx-clear{border-color:rgba(37,194,106,.30);background:rgba(37,194,106,.05)}
+.fx-notif span{flex:1;line-height:1.4}
+.fx-notif-x{appearance:none;cursor:pointer;min-height:44px;min-width:44px;font:inherit;
+  color:var(--text-faint);background:transparent;border:1px solid var(--border);border-radius:8px}
+.fx-notif-x:hover{color:var(--text);border-color:var(--border-strong)}
